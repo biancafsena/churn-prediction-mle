@@ -1,12 +1,20 @@
-# Customer Churn Prediction — Machine Learning Engineering
+## Customer Churn Prediction — Machine Learning Engineering
 
-Pipeline de Machine Learning de ponta a ponta para previsão de churn de clientes, desenvolvido com foco em experimentação reprodutível, comparação de modelos, engenharia de software, testes automatizados e disponibilização de inferência por API REST.
+**Tech Challenge — Fase 1**
 
-## Visão Geral
+**Pós-Tech em Machine Learning Engineering — FIAP**
 
-A retenção de clientes é um desafio relevante para empresas que operam com serviços recorrentes. Identificar antecipadamente clientes com maior probabilidade de cancelamento permite direcionar estratégias de retenção de forma mais eficiente.
+**Grupo:** 56
 
-Este projeto desenvolve uma solução completa de Machine Learning para previsão de churn, contemplando desde a análise e preparação dos dados até a disponibilização do modelo selecionado por meio de uma API REST.
+**Autora:** Bianca Firmino Ferreira de Sena
+
+---
+
+### Visão Geral
+
+A retenção de clientes é um dos principais desafios enfrentados por empresas que operam com serviços recorrentes. Identificar antecipadamente clientes com maior probabilidade de cancelamento permite direcionar estratégias de retenção mais eficientes, reduzindo perdas financeiras e aumentando o valor gerado ao negócio.
+
+Este projeto desenvolve uma solução completa de Machine Learning para previsão de churn de clientes, contemplando todas as etapas do ciclo de vida de um modelo, desde a análise exploratória dos dados até a disponibilização do modelo selecionado por meio de uma API REST.
 
 O desenvolvimento segue uma separação clara entre:
 
@@ -16,7 +24,30 @@ O desenvolvimento segue uma separação clara entre:
 - testes automatizados;
 - documentação técnica.
 
-## Objetivos
+---
+
+### Sumário
+
+- Visão Geral
+- Objetivos
+- Problema de Negócio
+- Dataset
+- Metodologia
+- Estratégia de Avaliação
+- Estrutura do Projeto
+- Notebooks
+- Resultados
+- Tecnologias
+- Reprodutibilidade
+- API
+- Testes
+- Documentação
+- Status do Projeto
+- Autora
+
+---
+
+### Objetivos
 
 O projeto tem como principais objetivos:
 
@@ -32,7 +63,9 @@ O projeto tem como principais objetivos:
 - disponibilizar previsões por meio de uma API REST com FastAPI;
 - validar componentes críticos utilizando testes automatizados com Pytest.
 
-## Problema de Negócio
+---
+
+### Problema de Negócio
 
 O churn representa a saída ou o cancelamento de clientes de um serviço.
 
@@ -43,7 +76,9 @@ A avaliação considera também as consequências dos erros:
 - **Falso Positivo (FP):** possível intervenção de retenção desnecessária.
 - **Falso Negativo (FN):** cliente com churn não identificado, representando uma oportunidade de retenção perdida.
 
-## Dataset
+---
+
+### Dataset
 
 O projeto utiliza o dataset **Telco Customer Churn**, contendo informações demográficas, contratuais e relacionadas aos serviços utilizados pelos clientes.
 
@@ -54,17 +89,19 @@ A variável alvo é:
 
 O dataset bruto deve ser armazenado localmente em:
 
-`data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv`
+```text
+data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+```
 
 Os dados brutos não são versionados neste repositório.
 
 ---
 
-## Metodologia
+### Metodologia
 
 O desenvolvimento está organizado em quatro etapas principais.
 
-### Etapa 1 — Entendimento e Preparação
+#### Etapa 1 — Entendimento e Preparação
 
 - definição e compreensão do problema de negócio;
 - construção do ML Canvas;
@@ -73,44 +110,42 @@ O desenvolvimento está organizado em quatro etapas principais.
 - definição das métricas técnicas e de negócio;
 - construção do baseline com Regressão Logística.
 
-### Etapa 2 — Modelagem e Avaliação
+####  Etapa 2 — Modelagem e Avaliação
 
 Serão avaliadas três famílias de modelos:
 
-1. **Regressão Logística** — modelo baseline;
-2. **Random Forest / Ensemble** — modelo baseado em árvores;
-3. **MLPClassifier** — rede neural simples utilizando Scikit-Learn.
+1. Regressão Logística (Baseline);
+2. Random Forest;
+3. MLPClassifier.
 
-Os modelos serão avaliados utilizando o mesmo protocolo experimental e validação cruzada para permitir uma comparação consistente.
+Todos os modelos serão avaliados utilizando exatamente o mesmo protocolo experimental, permitindo uma comparação consistente entre desempenho, robustez e capacidade de generalização.
 
-### Etapa 3 — Engenharia e API
+####  Etapa 3 — Engenharia e API
 
 Após a seleção do modelo campeão:
 
-- o pré-processamento será refatorado para código modular;
-- o fluxo de inferência será implementado em `src/`;
-- o modelo será persistido para utilização em produção;
-- será desenvolvida uma API REST com FastAPI;
-- serão disponibilizados os endpoints `GET /health` e `POST /predict`;
-- serão implementados testes automatizados com Pytest.
+- refatoração do pipeline para código modular;
+- implementação do fluxo produtivo em `src/`;
+- persistência do modelo;
+- desenvolvimento de API REST utilizando FastAPI;
+- implementação dos endpoints `GET /health` e `POST /predict`;
+- testes automatizados com Pytest.
 
-### Etapa 4 — Documentação e Apresentação
+####  Etapa 4 — Documentação e Apresentação
 
-A etapa final contempla:
-
-- documentação do projeto;
-- Model Card do modelo selecionado;
+- documentação técnica;
+- Model Card;
 - consolidação dos resultados;
-- limitações e possíveis vieses;
-- preparação da apresentação final utilizando a estrutura STAR.
+- limitações e vieses;
+- preparação da apresentação final utilizando a metodologia STAR.
 
 ---
 
-## Estratégia de Avaliação
+### Estratégia de Avaliação
 
-A principal referência técnica definida para comparação dos modelos é a **PR-AUC / Average Precision**, considerando a relevância da classe positiva e o desbalanceamento observado no problema.
+A principal referência técnica definida para comparação dos modelos será a **PR-AUC (Average Precision)**, considerando o desbalanceamento existente entre as classes.
 
-Também serão reportadas as seguintes métricas:
+Também serão avaliadas:
 
 - Recall;
 - F1-Score;
@@ -122,16 +157,16 @@ A seleção do modelo campeão não será baseada exclusivamente em uma única m
 
 Também serão considerados:
 
-- estabilidade durante a validação cruzada;
+- estabilidade na validação cruzada;
 - capacidade de generalização;
-- comportamento de Falsos Positivos e Falsos Negativos;
-- impacto potencial dos erros para o negócio;
-- equilíbrio entre desempenho preditivo e aplicabilidade da solução.
-
+- comportamento dos Falsos Positivos;
+- comportamento dos Falsos Negativos;
+- impacto dos erros para o negócio;
+- equilíbrio entre desempenho preditivo e interpretabilidade.
 
 ---
 
-## Estrutura do Projeto
+### Estrutura do Projeto
 
 ```text
 churn-prediction-mle/
@@ -158,67 +193,78 @@ churn-prediction-mle/
 
 ### Responsabilidades dos Diretórios
 
-- `data/raw/` — dados originais utilizados no projeto;
-- `data/processed/` — dados processados gerados durante o pipeline;
-- `notebooks/` — análise exploratória, experimentação e comparação dos modelos;
-- `src/churn_prediction/data/` — carregamento e manipulação dos dados;
-- `src/churn_prediction/features/` — pré-processamento e engenharia de atributos;
-- `src/churn_prediction/modeling/` — treinamento, avaliação e inferência;
-- `src/churn_prediction/api/` — aplicação FastAPI e contratos de entrada e saída;
-- `models/` — modelos treinados e persistidos;
-- `artifacts/metrics/` — resultados e métricas dos experimentos;
-- `artifacts/figures/` — visualizações e gráficos gerados;
-- `tests/` — testes automatizados;
-- `docs/` — documentação complementar do projeto.
-
+- `data/raw/` — dados originais.
+- `data/processed/` — dados processados.
+- `notebooks/` — análises e experimentação.
+- `src/churn_prediction/data/` — carregamento dos dados.
+- `src/churn_prediction/features/` — engenharia de atributos.
+- `src/churn_prediction/modeling/` — treinamento e inferência.
+- `src/churn_prediction/api/` — FastAPI.
+- `models/` — modelos persistidos.
+- `artifacts/metrics/` — métricas experimentais.
+- `artifacts/figures/` — gráficos.
+- `tests/` — testes automatizados.
+- `docs/` — documentação complementar.
 
 ---
 
-## Notebooks
+### Notebooks
 
 O fluxo experimental está organizado sequencialmente:
 
-1. `01_eda.ipynb` — análise exploratória e avaliação da qualidade dos dados;
-2. `02_metricas_negocio_tecnicas.ipynb` — definição das métricas técnicas e de negócio;
-3. `03_baseline_logistic_regression.ipynb` — construção e avaliação do modelo baseline;
-4. `04_random_forest.ipynb` — treinamento e avaliação do modelo baseado em árvores;
-5. `05_mlp_classifier.ipynb` — treinamento e avaliação da rede neural simples;
-6. `06_comparacao_modelos.ipynb` — comparação final e seleção do modelo campeão.
+1. `01_eda.ipynb`
+2. `02_metricas_negocio_tecnicas.ipynb`
+3. `03_baseline_logistic_regression.ipynb`
+4. `04_random_forest.ipynb`
+5. `05_mlp_classifier.ipynb`
+6. `06_comparacao_modelos.ipynb`
 
-O fluxo segue a sequência:
+Fluxo do projeto:
 
-EDA → Métricas → Baseline → Random Forest → MLPClassifier → Comparação → Modelo Campeão
+```text
+EDA
+   ↓
+Métricas
+   ↓
+Baseline
+   ↓
+Random Forest
+   ↓
+MLPClassifier
+   ↓
+Comparação
+   ↓
+Modelo Campeão
+   ↓
+API REST
+```
 
 ---
 
-## Resultados
+### Resultados
 
-Os resultados serão atualizados progressivamente conforme os experimentos forem concluídos.
+Os resultados serão atualizados conforme cada experimento for concluído.
 
 | Modelo | PR-AUC | ROC-AUC | F1-Score | Recall | Precision |
-|---|---:|---:|---:|---:|---:|
-| Regressão Logística | A definir | A definir | A definir | A definir | A definir |
-| Random Forest / Ensemble | A definir | A definir | A definir | A definir | A definir |
+|---------|:------:|:-------:|:--------:|:------:|:---------:|
+| Regressão Logística | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* |
+| Random Forest | A definir | A definir | A definir | A definir | A definir |
 | MLPClassifier | A definir | A definir | A definir | A definir | A definir |
 
 ### Modelo Campeão
 
-A definir após a conclusão da comparação experimental.
-
-A escolha será fundamentada nos resultados obtidos no conjunto de avaliação, na validação cruzada e na análise dos impactos dos erros de classificação.
-
+Será definido após a comparação experimental entre todos os modelos.
 
 ---
 
-## Tecnologias
-
-Principais tecnologias utilizadas no projeto:
+### Tecnologias
 
 - Python
 - Pandas
 - NumPy
 - Scikit-Learn
 - Matplotlib
+- Seaborn
 - Joblib
 - FastAPI
 - Pydantic
@@ -226,71 +272,80 @@ Principais tecnologias utilizadas no projeto:
 - Pytest
 - MLflow
 - Ruff
-- Jupyter
+- Jupyter Notebook
 
 ---
 
-## Reprodutibilidade
+### Reprodutibilidade
 
-O projeto adota práticas para garantir experimentos consistentes e reproduzíveis:
+O projeto adota práticas para garantir experimentos reproduzíveis:
 
 - ambiente Python isolado;
-- dependências declaradas em `pyproject.toml`;
+- dependências declaradas;
 - controle de sementes aleatórias;
-- divisão estratificada dos dados quando aplicável;
+- divisão estratificada dos dados;
 - validação cruzada;
-- protocolo consistente de comparação entre modelos;
-- registro dos resultados experimentais;
-- persistência do pipeline e do modelo selecionado;
+- pipeline reproduzível;
+- persistência dos modelos;
 - testes automatizados.
-
-As instruções completas de instalação e execução serão adicionadas após a implementação do pipeline produtivo e da API.
 
 ---
 
-## API
+### API
 
-A solução disponibilizará uma API REST construída com FastAPI.
+Será disponibilizada uma API REST utilizando FastAPI.
 
 Endpoints previstos:
 
-### `GET /health`
+#### `GET /health`
 
-Verifica a disponibilidade e o estado da aplicação.
+Verifica o estado da aplicação.
 
-### `POST /predict`
+#### `POST /predict`
 
-Recebe os atributos de um cliente e retorna a previsão de churn gerada pelo modelo selecionado.
-
-A documentação interativa será disponibilizada automaticamente pelo FastAPI após a execução da aplicação.
+Recebe os dados de um cliente e retorna a previsão de churn.
 
 ---
 
-## Testes
+### Testes
 
-Os testes automatizados serão implementados com Pytest e contemplarão componentes críticos da solução, incluindo:
+Serão implementados testes automatizados utilizando Pytest para validar:
 
-- pré-processamento dos dados;
-- fluxo de predição;
-- funcionamento dos endpoints da API.
-
----
-
-## Documentação
-
-A documentação complementar está organizada em `docs/`:
-
-- `ml_canvas.md` — estruturação do problema de Machine Learning;
-- `model_card.md` — documentação do modelo selecionado, incluindo performance, limitações e possíveis vieses;
-- `star_video_script.md` — roteiro da apresentação final utilizando o método STAR.
+- pré-processamento;
+- treinamento;
+- inferência;
+- endpoints da API.
 
 ---
 
-## Status do Projeto
+### Documentação
+
+A documentação complementar estará organizada em `docs/`.
+
+- `ml_canvas.md`
+- `model_card.md`
+- `star_video_script.md`
+
+---
+
+### Status do Projeto
 
 🚧 **Em desenvolvimento**
 
-Etapa atual: entendimento, preparação dos dados e construção do baseline.
+### Etapas concluídas
+
+- ✅ Análise Exploratória dos Dados (EDA)
+- ✅ Definição das Métricas Técnicas e de Negócio
+- ✅ Modelo Baseline — Regressão Logística
+
+### Próximas etapas
+
+- 🔄 Random Forest
+- ⏳ MLPClassifier
+- ⏳ Comparação dos Modelos
+- ⏳ API REST
+- ⏳ Testes Automatizados
+- ⏳ Documentação Final
 
 ---
 
@@ -298,4 +353,4 @@ Etapa atual: entendimento, preparação dos dados e construção do baseline.
 
 **Bianca Firmino Ferreira de Sena**
 
-Projeto desenvolvido como parte da Pós-Tech em Machine Learning Engineering — FIAP.
+Projeto desenvolvido como parte da **Pós-Tech em Machine Learning Engineering — FIAP**.
