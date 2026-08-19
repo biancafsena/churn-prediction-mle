@@ -1,168 +1,300 @@
 ## Customer Churn Prediction — Machine Learning Engineering
 
-**Tech Challenge — Fase 1**
-
-**Pós-Tech em Machine Learning Engineering — FIAP**
-
-**Grupo:** 56
-
+**Tech Challenge — Fase 1**  
+**Pós-Tech em Machine Learning Engineering — FIAP**  
+**Grupo:** 56  
 **Autora:** Bianca Firmino Ferreira de Sena
 
 ---
 
 ### Visão Geral
 
-A retenção de clientes é um dos principais desafios enfrentados por empresas que operam com serviços recorrentes. Identificar antecipadamente clientes com maior probabilidade de cancelamento permite direcionar estratégias de retenção mais eficientes, reduzindo perdas financeiras e aumentando o valor gerado ao negócio.
+Este projeto desenvolve uma solução de Machine Learning para previsão de churn em uma operadora de telecomunicações. O objetivo é identificar clientes com maior risco de cancelamento e apoiar a priorização de ações de retenção.
 
-Este projeto desenvolve uma solução completa de Machine Learning para previsão de churn de clientes, contemplando todas as etapas do ciclo de vida de um modelo, desde a análise exploratória dos dados até a disponibilização do modelo selecionado por meio de uma API REST.
+O trabalho contempla o ciclo de vida de Machine Learning de ponta a ponta:
 
-O desenvolvimento segue uma separação clara entre:
+- entendimento do problema de negócio;
+- análise exploratória e avaliação da qualidade dos dados;
+- definição de métricas técnicas e de negócio;
+- treinamento de modelos baseline e modelos candidatos;
+- construção de uma rede neural MLP com PyTorch;
+- análise de thresholds e custo dos erros;
+- validação cruzada estratificada;
+- rastreamento de experimentos com MLflow;
+- persistência e validação dos artefatos;
+- preparação para inferência por API REST.
 
-- experimentação e análise em notebooks;
-- código produtivo modularizado em `src/`;
-- modelos e artefatos gerados;
-- testes automatizados;
-- documentação técnica.
-
----
-
-### Sumário
-
-- Visão Geral
-- Objetivos
-- Problema de Negócio
-- Dataset
-- Metodologia
-- Estratégia de Avaliação
-- Estrutura do Projeto
-- Notebooks
-- Resultados
-- Tecnologias
-- Reprodutibilidade
-- API
-- Testes
-- Documentação
-- Status do Projeto
-- Autora
-
----
-
-### Objetivos
-
-O projeto tem como principais objetivos:
-
-- compreender os fatores associados ao churn de clientes;
-- avaliar a qualidade e a prontidão dos dados para modelagem;
-- definir métricas técnicas e de negócio adequadas ao problema;
-- estabelecer uma Regressão Logística como modelo baseline;
-- treinar e avaliar modelos baseados em árvores/ensembles;
-- treinar uma rede neural simples utilizando `MLPClassifier`;
-- aplicar validação cruzada para avaliar a robustez dos modelos;
-- comparar os modelos utilizando um protocolo consistente de avaliação;
-- selecionar e persistir o modelo campeão;
-- disponibilizar previsões por meio de uma API REST com FastAPI;
-- validar componentes críticos utilizando testes automatizados com Pytest.
+O modelo central exigido pelo Tech Challenge é uma MLP implementada com PyTorch. Regressão Logística, Random Forest e MLPClassifier do Scikit-Learn são utilizados como referências comparativas.
 
 ---
 
 ### Problema de Negócio
 
-O churn representa a saída ou o cancelamento de clientes de um serviço.
+Churn representa o cancelamento ou a saída de um cliente de um serviço. Antecipar esse comportamento permite que equipes de CRM, Customer Success e retenção direcionem ações preventivas aos clientes com maior risco.
 
-O objetivo preditivo deste projeto é identificar clientes com maior risco de churn, permitindo que ações de retenção possam ser direcionadas de maneira mais eficiente.
+O problema foi formulado como uma classificação binária:
 
-A avaliação considera também as consequências dos erros:
+- `Churn = 0`: cliente permaneceu;
+- `Churn = 1`: cliente cancelou.
 
-- **Falso Positivo (FP):** possível intervenção de retenção desnecessária.
-- **Falso Negativo (FN):** cliente com churn não identificado, representando uma oportunidade de retenção perdida.
+Os erros possuem impactos diferentes:
+
+- **Falso Positivo (FP):** um cliente sem churn é abordado desnecessariamente;
+- **Falso Negativo (FN):** um cliente com churn não é identificado, resultando em uma oportunidade de retenção perdida.
+
+Como falsos negativos podem representar maior perda financeira, o projeto avalia diferentes thresholds e simula cenários de custo relativo.
 
 ---
 
 ### Dataset
 
-O projeto utiliza o dataset **Telco Customer Churn**, contendo informações demográficas, contratuais e relacionadas aos serviços utilizados pelos clientes.
+O projeto utiliza o dataset público **Telco Customer Churn**, com informações demográficas, contratuais, financeiras e relacionadas aos serviços utilizados pelos clientes.
 
-A variável alvo é:
+Características principais:
 
-- `Churn = No` → cliente permaneceu;
-- `Churn = Yes` → cliente cancelou.
+- 7.043 observações;
+- 21 colunas originais;
+- 19 variáveis explicativas após a remoção de `customerID` e `Churn`;
+- 1.869 clientes com churn;
+- taxa de churn de 26,54%;
+- 11 valores ausentes em `TotalCharges`, tratados por imputação no pipeline.
 
-O dataset bruto deve ser armazenado localmente em:
+O arquivo deve estar disponível em:
 
 ```text
 data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
 ```
 
-Os dados brutos não são versionados neste repositório.
+---
+
+### Objetivos
+
+- compreender os fatores relacionados ao churn;
+- avaliar a qualidade e a prontidão dos dados;
+- definir métricas técnicas e de negócio;
+- estabelecer referências com modelos baseline;
+- construir uma MLP com PyTorch;
+- implementar batching e Early Stopping;
+- avaliar múltiplas métricas de classificação;
+- analisar falsos positivos e falsos negativos;
+- avaliar o impacto da alteração do threshold;
+- aplicar validação cruzada estratificada;
+- registrar parâmetros, métricas e artefatos no MLflow;
+- persistir e validar o fluxo de inferência;
+- comparar os modelos e selecionar o modelo campeão;
+- disponibilizar o modelo selecionado por meio de FastAPI;
+- validar os componentes críticos com testes automatizados.
 
 ---
 
 ### Metodologia
 
-O desenvolvimento está organizado em quatro etapas principais.
-
 #### Etapa 1 — Entendimento e Preparação
 
-- definição e compreensão do problema de negócio;
 - construção do ML Canvas;
-- análise exploratória dos dados (EDA);
-- avaliação da qualidade e prontidão dos dados;
+- análise exploratória dos dados;
+- avaliação de data readiness;
 - definição das métricas técnicas e de negócio;
-- construção do baseline com Regressão Logística.
+- preparação do protocolo experimental;
+- construção da Regressão Logística baseline.
 
-####  Etapa 2 — Modelagem e Avaliação
+#### Etapa 2 — Modelagem e Avaliação
 
-Serão avaliadas três famílias de modelos:
+Modelos considerados:
 
-1. Regressão Logística (Baseline);
-2. Random Forest;
-3. MLPClassifier.
+1. DummyClassifier;
+2. Regressão Logística;
+3. Random Forest;
+4. MLPClassifier do Scikit-Learn;
+5. MLP implementada com PyTorch.
 
-Todos os modelos serão avaliados utilizando exatamente o mesmo protocolo experimental, permitindo uma comparação consistente entre desempenho, robustez e capacidade de generalização.
+Os modelos são avaliados com o mesmo conjunto de teste e por meio de múltiplas métricas. A MLP PyTorch também utiliza um conjunto interno de validação para controlar o Early Stopping.
 
-####  Etapa 3 — Engenharia e API
+#### Etapa 3 — Engenharia e API
 
-Após a seleção do modelo campeão:
+- refatoração do código experimental para `src/`;
+- persistência do modelo e do pré-processador;
+- implementação de inferência reutilizável;
+- criação da API FastAPI;
+- endpoints `GET /health` e `POST /predict`;
+- validação das entradas com Pydantic;
+- logging estruturado e monitoramento de latência;
+- testes automatizados.
 
-- refatoração do pipeline para código modular;
-- implementação do fluxo produtivo em `src/`;
-- persistência do modelo;
-- desenvolvimento de API REST utilizando FastAPI;
-- implementação dos endpoints `GET /health` e `POST /predict`;
-- testes automatizados com Pytest.
+#### Etapa 4 — Documentação e Entrega
 
-####  Etapa 4 — Documentação e Apresentação
+- atualização do README;
+- elaboração do Model Card;
+- documentação da arquitetura de inferência;
+- plano de monitoramento;
+- roteiro e gravação do vídeo pelo método STAR.
 
-- documentação técnica;
-- Model Card;
-- consolidação dos resultados;
-- limitações e vieses;
-- preparação da apresentação final utilizando a metodologia STAR.
+---
+
+### Pré-processamento
+
+O pipeline de pré-processamento utiliza Scikit-Learn e é ajustado exclusivamente sobre os dados de treino.
+
+Variáveis numéricas:
+
+- imputação pela mediana;
+- padronização com `StandardScaler`.
+
+Variáveis categóricas:
+
+- imputação pelo valor mais frequente;
+- One-Hot Encoding;
+- tratamento de categorias desconhecidas.
+
+Após o pré-processamento, as 19 variáveis explicativas originam 45 features numéricas no experimento atual.
+
+---
+
+### MLP com PyTorch
+
+A rede neural central foi implementada explicitamente com `torch.nn.Module`.
+
+Arquitetura:
+
+```text
+45 features
+    ↓
+Linear(45, 64) + ReLU + Dropout(20%)
+    ↓
+Linear(64, 32) + ReLU + Dropout(20%)
+    ↓
+Linear(32, 1)
+    ↓
+Logit de churn
+```
+
+Configuração do treinamento:
+
+- 5.057 parâmetros treináveis;
+- `BCEWithLogitsLoss`;
+- otimizador Adam;
+- learning rate de 0,001;
+- regularização L2 de 0,0001;
+- batch size de 32;
+- máximo de 300 épocas;
+- paciência de 20 épocas;
+- restauração dos melhores pesos.
+
+O Early Stopping encerrou o treinamento após 29 épocas. A melhor loss de validação foi obtida na época 9.
 
 ---
 
 ### Estratégia de Avaliação
 
-A principal referência técnica definida para comparação dos modelos será a **PR-AUC (Average Precision)**, considerando o desbalanceamento existente entre as classes.
+A métrica técnica prioritária é a **Average Precision**, utilizada como resumo da curva Precision-Recall devido à distribuição desigual da classe positiva.
 
-Também serão avaliadas:
+Também são avaliadas:
 
+- Accuracy;
+- Precision;
 - Recall;
 - F1-Score;
 - ROC-AUC;
-- Precision;
-- Accuracy.
-
-A seleção do modelo campeão não será baseada exclusivamente em uma única métrica.
-
-Também serão considerados:
-
+- matriz de confusão;
+- loss de validação e teste;
 - estabilidade na validação cruzada;
-- capacidade de generalização;
-- comportamento dos Falsos Positivos;
-- comportamento dos Falsos Negativos;
-- impacto dos erros para o negócio;
-- equilíbrio entre desempenho preditivo e interpretabilidade.
+- custo relativo de falsos positivos e falsos negativos.
+
+A seleção do modelo campeão não será baseada exclusivamente em uma única métrica. Também serão considerados estabilidade, capacidade de generalização, impacto dos erros, interpretabilidade e complexidade operacional.
+
+---
+
+### Resultados da MLP PyTorch
+
+#### Hold-out — threshold 0,50
+
+| Métrica | Resultado |
+|---|---:|
+| Accuracy | 0,7956 |
+| Precision | 0,6344 |
+| Recall | 0,5428 |
+| F1-Score | 0,5850 |
+| ROC-AUC | 0,8419 |
+| Average Precision | 0,6349 |
+| Test Loss | 0,4204 |
+
+Matriz de confusão:
+
+| Resultado | Quantidade |
+|---|---:|
+| Verdadeiros Negativos | 918 |
+| Falsos Positivos | 117 |
+| Falsos Negativos | 171 |
+| Verdadeiros Positivos | 203 |
+
+#### Validação cruzada estratificada — cinco folds
+
+| Métrica | Média | Desvio-padrão |
+|---|---:|---:|
+| Accuracy | 0,8012 | 0,0112 |
+| Precision | 0,6537 | 0,0271 |
+| Recall | 0,5340 | 0,0200 |
+| F1-Score | 0,5878 | 0,0226 |
+| ROC-AUC | 0,8419 | 0,0150 |
+| Average Precision | 0,6488 | 0,0288 |
+
+Os resultados do hold-out permaneceram dentro da variação observada nos folds, fornecendo evidências de desempenho consistente.
+
+#### Thresholds de referência
+
+| Critério | Threshold | Resultado principal |
+|---|---:|---:|
+| Padrão | 0,50 | F1 = 0,5850 |
+| Melhor F1 entre os avaliados | 0,30 | F1 = 0,6215 |
+| Menor custo na simulação 1:5 | 0,20 | Custo relativo = 621 |
+
+Na simulação em que um falso negativo custa cinco vezes mais que um falso positivo, o threshold de 0,20 reduziu o custo relativo em 36,11% quando comparado ao threshold padrão.
+
+Os custos utilizados são hipotéticos e deverão ser substituídos por valores observados em uma aplicação real.
+
+---
+
+### Persistência dos Artefatos
+
+O experimento da MLP PyTorch produz:
+
+```text
+models/
+├── mlp_pytorch_state_dict.pt
+├── mlp_pytorch_preprocessor.joblib
+└── mlp_pytorch_metadata.json
+```
+
+O teste de recarregamento confirmou que o modelo reconstruído reproduz exatamente as probabilidades originais, com diferença máxima igual a zero.
+
+Os arquivos de modelos não são versionados diretamente no Git. Eles podem ser reproduzidos pela execução do notebook e são registrados como artefatos no MLflow.
+
+---
+
+### Rastreamento com MLflow
+
+O experimento da MLP PyTorch utiliza:
+
+- backend SQLite para parâmetros, métricas e identificação das execuções;
+- diretório local para os artefatos;
+- hash SHA-256 do dataset;
+- histórico de loss por época;
+- parâmetros da arquitetura e do treinamento;
+- métricas do hold-out e da validação cruzada;
+- checkpoint, pré-processador, metadados, tabelas e gráfico de treinamento.
+
+Para iniciar a interface local:
+
+```bash
+mlflow server \
+  --backend-store-uri sqlite:///mlflow.db \
+  --host 127.0.0.1 \
+  --port 5000
+```
+
+Depois, acesse `http://127.0.0.1:5000`.
+
+O banco `mlflow.db` e o diretório `mlartifacts/` são locais e não devem ser versionados.
 
 ---
 
@@ -170,161 +302,179 @@ Também serão considerados:
 
 ```text
 churn-prediction-mle/
+├── artifacts/
+│   ├── figures/
+│   └── metrics/
 ├── data/
-│   ├── raw/
-│   └── processed/
+│   ├── processed/
+│   └── raw/
+├── docs/
+│   ├── ml_canvas.md
+│   ├── model_card.md
+│   └── star_video_script.md
+├── models/
 ├── notebooks/
+│   ├── 01_eda.ipynb
+│   ├── 02_metricas_negocio_tecnicas.ipynb
+│   ├── 03_baseline_logistic_regression.ipynb
+│   ├── 04_random_forest.ipynb
+│   ├── 05_mlp_classifier.ipynb
+│   ├── 06_mlp_pytorch.ipynb
+│   └── 07_comparacao_modelos.ipynb
 ├── src/
 │   └── churn_prediction/
+│       ├── api/
 │       ├── data/
 │       ├── features/
-│       ├── modeling/
-│       └── api/
-├── models/
-├── artifacts/
-│   ├── metrics/
-│   └── figures/
+│       └── modeling/
 ├── tests/
-├── docs/
-├── pyproject.toml
 ├── .gitignore
+├── pyproject.toml
 └── README.md
 ```
-
-### Responsabilidades dos Diretórios
-
-- `data/raw/` — dados originais.
-- `data/processed/` — dados processados.
-- `notebooks/` — análises e experimentação.
-- `src/churn_prediction/data/` — carregamento dos dados.
-- `src/churn_prediction/features/` — engenharia de atributos.
-- `src/churn_prediction/modeling/` — treinamento e inferência.
-- `src/churn_prediction/api/` — FastAPI.
-- `models/` — modelos persistidos.
-- `artifacts/metrics/` — métricas experimentais.
-- `artifacts/figures/` — gráficos.
-- `tests/` — testes automatizados.
-- `docs/` — documentação complementar.
 
 ---
 
 ### Notebooks
 
-O fluxo experimental está organizado sequencialmente:
+1. `01_eda.ipynb` — análise exploratória e data readiness;
+2. `02_metricas_negocio_tecnicas.ipynb` — métricas técnicas, erros e impacto de negócio;
+3. `03_baseline_logistic_regression.ipynb` — baseline de Regressão Logística;
+4. `04_random_forest.ipynb` — modelo ensemble e importância das variáveis;
+5. `05_mlp_classifier.ipynb` — experimento adicional com MLPClassifier;
+6. `06_mlp_pytorch.ipynb` — MLP central em PyTorch, Early Stopping, thresholds, validação cruzada, persistência e MLflow;
+7. `07_comparacao_modelos.ipynb` — comparação consolidada e seleção do modelo campeão.
 
-1. `01_eda.ipynb`
-2. `02_metricas_negocio_tecnicas.ipynb`
-3. `03_baseline_logistic_regression.ipynb`
-4. `04_random_forest.ipynb`
-5. `05_mlp_classifier.ipynb`
-6. `06_comparacao_modelos.ipynb`
+---
 
-Fluxo do projeto:
+### Instalação
 
-```text
-EDA
-   ↓
-Métricas
-   ↓
-Baseline
-   ↓
-Random Forest
-   ↓
-MLPClassifier
-   ↓
-Comparação
-   ↓
-Modelo Campeão
-   ↓
-API REST
+Requisitos:
+
+- Python 3.11 ou 3.12;
+- Git;
+- ambiente virtual recomendado.
+
+Clone o repositório e entre no diretório:
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd churn-prediction-mle
+```
+
+Crie e ative um ambiente virtual com Conda:
+
+```bash
+conda create -n churn-mle python=3.11 -y
+conda activate churn-mle
+```
+
+Instale o projeto com as dependências de desenvolvimento:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+Valide as dependências:
+
+```bash
+python -m pip check
 ```
 
 ---
 
-### Resultados
+### Execução dos Notebooks
 
-Os resultados serão atualizados conforme cada experimento for concluído.
+Inicie o Jupyter:
 
-| Modelo | PR-AUC | ROC-AUC | F1-Score | Recall | Precision |
-|---------|:------:|:-------:|:--------:|:------:|:---------:|
-| Regressão Logística | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* | *(Atualizar)* |
-| Random Forest | A definir | A definir | A definir | A definir | A definir |
-| MLPClassifier | A definir | A definir | A definir | A definir | A definir |
+```bash
+jupyter lab
+```
 
-### Modelo Campeão
-
-Será definido após a comparação experimental entre todos os modelos.
-
----
-
-### Tecnologias
-
-- Python
-- Pandas
-- NumPy
-- Scikit-Learn
-- Matplotlib
-- Seaborn
-- Joblib
-- FastAPI
-- Pydantic
-- Uvicorn
-- Pytest
-- MLflow
-- Ruff
-- Jupyter Notebook
-
----
-
-### Reprodutibilidade
-
-O projeto adota práticas para garantir experimentos reproduzíveis:
-
-- ambiente Python isolado;
-- dependências declaradas;
-- controle de sementes aleatórias;
-- divisão estratificada dos dados;
-- validação cruzada;
-- pipeline reproduzível;
-- persistência dos modelos;
-- testes automatizados.
+Execute os notebooks na ordem numérica. O dataset deve estar disponível em `data/raw/` antes da execução.
 
 ---
 
 ### API
 
-Será disponibilizada uma API REST utilizando FastAPI.
+A etapa de engenharia disponibilizará os endpoints:
 
-Endpoints previstos:
+- `GET /health` — verificação da disponibilidade da aplicação;
+- `POST /predict` — recebimento das características do cliente e retorno da probabilidade e classe previstas.
 
-#### `GET /health`
+As entradas serão validadas com Pydantic. O modelo e o pré-processador serão carregados uma única vez na inicialização da aplicação.
 
-Verifica o estado da aplicação.
-
-#### `POST /predict`
-
-Recebe os dados de um cliente e retorna a previsão de churn.
+**Status atual:** implementação pendente.
 
 ---
 
-### Testes
+### Testes e Qualidade
 
-Serão implementados testes automatizados utilizando Pytest para validar:
+O projeto utilizará Pytest para validar, no mínimo:
 
-- pré-processamento;
-- treinamento;
-- inferência;
-- endpoints da API.
+- schema e pré-processamento;
+- carregamento dos artefatos;
+- smoke test de inferência;
+- endpoint `/health`;
+- endpoint `/predict`.
+
+O Ruff será utilizado para linting do código produtivo.
+
+Comandos planejados:
+
+```bash
+ruff check .
+pytest
+```
+
+**Status atual:** implementação dos testes pendente.
+
+---
+
+### Tecnologias
+
+- Python;
+- Pandas e NumPy;
+- Scikit-Learn;
+- PyTorch;
+- Matplotlib;
+- Joblib;
+- MLflow;
+- SQLite;
+- FastAPI;
+- Pydantic;
+- Uvicorn;
+- Pytest;
+- Ruff;
+- Jupyter Notebook.
+
+---
+
+### Reprodutibilidade
+
+O projeto adota:
+
+- dependências declaradas no `pyproject.toml`;
+- Python entre 3.11 e 3.12;
+- seeds fixadas em 42;
+- algoritmos determinísticos no PyTorch;
+- divisão estratificada;
+- pré-processamento ajustado somente no treino;
+- validação cruzada estratificada;
+- hash do dataset no MLflow;
+- persistência do pré-processador, pesos e metadados;
+- teste de recarregamento dos artefatos.
 
 ---
 
 ### Documentação
 
-A documentação complementar estará organizada em `docs/`.
+Documentos previstos em `docs/`:
 
-- `ml_canvas.md`
-- `model_card.md`
-- `star_video_script.md`
+- `ml_canvas.md` — planejamento do problema e da solução;
+- `model_card.md` — desempenho, limitações, riscos e usos recomendados;
+- `star_video_script.md` — roteiro da apresentação final.
 
 ---
 
@@ -332,25 +482,38 @@ A documentação complementar estará organizada em `docs/`.
 
 🚧 **Em desenvolvimento**
 
-### Etapas concluídas
+Concluído:
 
-- ✅ Análise Exploratória dos Dados (EDA)
-- ✅ Definição das Métricas Técnicas e de Negócio
-- ✅ Modelo Baseline — Regressão Logística
+- ✅ estrutura inicial do repositório;
+- ✅ ML Canvas;
+- ✅ análise exploratória e data readiness;
+- ✅ métricas técnicas e de negócio;
+- ✅ Regressão Logística baseline;
+- ✅ Random Forest;
+- ✅ MLPClassifier do Scikit-Learn;
+- ✅ MLP com PyTorch;
+- ✅ batching e Early Stopping;
+- ✅ análise de thresholds e custo relativo;
+- ✅ validação cruzada estratificada da MLP PyTorch;
+- ✅ persistência e validação dos artefatos da MLP PyTorch;
+- ✅ registro da MLP PyTorch no MLflow.
 
-### Próximas etapas
+Em andamento ou pendente:
 
-- 🔄 Random Forest
-- ⏳ MLPClassifier
-- ⏳ Comparação dos Modelos
-- ⏳ API REST
-- ⏳ Testes Automatizados
-- ⏳ Documentação Final
+- 🔄 DummyClassifier e comparação consolidada;
+- ⏳ seleção do modelo campeão;
+- ⏳ registro consolidado dos demais modelos no MLflow;
+- ⏳ refatoração completa em `src/`;
+- ⏳ API FastAPI;
+- ⏳ testes automatizados;
+- ⏳ logging estruturado;
+- ⏳ Model Card e plano de monitoramento;
+- ⏳ vídeo STAR.
 
 ---
 
-## Autora
+### Autora
 
 **Bianca Firmino Ferreira de Sena**
 
-Projeto desenvolvido como parte da **Pós-Tech em Machine Learning Engineering — FIAP**.
+Projeto desenvolvido como parte da Pós-Tech em Machine Learning Engineering da FIAP.
