@@ -1,4 +1,4 @@
-## Customer Churn Prediction — Machine Learning Engineering
+# Customer Churn Prediction — Machine Learning Engineering
 
 **Tech Challenge — Fase 1**  
 **Pós-Tech em Machine Learning Engineering — FIAP**  
@@ -81,7 +81,7 @@ data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
 - aplicar validação cruzada estratificada;
 - registrar parâmetros, métricas e artefatos no MLflow;
 - persistir e validar o fluxo de inferência;
-- comparar os modelos e selecionar o modelo campeão;
+- comparar os modelos e selecionar o modelo recomendado para o negócio;
 - disponibilizar o modelo selecionado por meio de FastAPI;
 - validar os componentes críticos com testes automatizados.
 
@@ -200,7 +200,45 @@ Também são avaliadas:
 - estabilidade na validação cruzada;
 - custo relativo de falsos positivos e falsos negativos.
 
-A seleção do modelo campeão não será baseada exclusivamente em uma única métrica. Também serão considerados estabilidade, capacidade de generalização, impacto dos erros, interpretabilidade e complexidade operacional.
+A seleção do modelo recomendado não foi baseada exclusivamente em uma única métrica. Também foram considerados estabilidade, capacidade de generalização, impacto dos erros, interpretabilidade e complexidade operacional.
+
+---
+
+### Comparação dos Modelos
+
+Os cinco modelos foram avaliados no mesmo conjunto de teste, com 1.409 observações e threshold padrão de 0,50.
+
+| Modelo | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Average Precision |
+|---|---:|---:|---:|---:|---:|---:|
+| DummyClassifier | 0,7346 | 0,0000 | 0,0000 | 0,0000 | 0,5000 | 0,2654 |
+| Regressão Logística | **0,8055** | **0,6572** | 0,5588 | 0,6040 | **0,8419** | 0,6334 |
+| Random Forest | 0,7729 | 0,5544 | **0,7353** | **0,6322** | 0,8401 | **0,6492** |
+| MLPClassifier | 0,7850 | 0,6330 | 0,4519 | 0,5273 | 0,8341 | 0,6231 |
+| MLP PyTorch | 0,7956 | 0,6344 | 0,5428 | 0,5850 | **0,8419** | 0,6349 |
+
+A Regressão Logística apresentou a maior Accuracy e Precision. O Random Forest obteve o maior Recall, F1-Score e Average Precision. A MLP PyTorch empatou com a Regressão Logística no maior ROC-AUC e permaneceu como o modelo neural central do projeto.
+
+#### Impacto dos erros no negócio
+
+Foi simulada uma relação de custo de 1 para Falso Positivo e 5 para Falso Negativo.
+
+| Modelo | FP | FN | Custo relativo total |
+|---|---:|---:|---:|
+| DummyClassifier | 0 | 374 | 1.870 |
+| Regressão Logística | 109 | 165 | 934 |
+| Random Forest | 221 | **99** | **716** |
+| MLPClassifier | 98 | 205 | 1.123 |
+| MLP PyTorch | 117 | 171 | 972 |
+
+O Random Forest foi selecionado como modelo recomendado para o cenário de negócio porque apresentou a menor quantidade de Falsos Negativos, o menor custo relativo total e o melhor equilíbrio entre Recall, F1-Score e Average Precision.
+
+Essa decisão não substitui a MLP PyTorch como modelo neural central exigido pelo desafio. Os dois modelos cumprem papéis complementares na solução.
+
+#### Visualizações consolidadas
+
+![Comparação das métricas dos modelos](reports/mlflow_experiments/model_metrics_comparison.png)
+
+![Comparação do impacto dos modelos para o negócio](reports/mlflow_experiments/business_impact_comparison.png)
 
 ---
 
@@ -273,20 +311,27 @@ Os arquivos de modelos não são versionados diretamente no Git. Eles podem ser 
 
 ### Rastreamento com MLflow
 
-O experimento da MLP PyTorch utiliza:
+O notebook `08_mlflow_experimentos.ipynb` centraliza o rastreamento dos cinco modelos no experimento `churn-prediction-model-comparison`.
 
-- backend SQLite para parâmetros, métricas e identificação das execuções;
-- diretório local para os artefatos;
-- hash SHA-256 do dataset;
-- histórico de loss por época;
-- parâmetros da arquitetura e do treinamento;
-- métricas do hold-out e da validação cruzada;
-- checkpoint, pré-processador, metadados, tabelas e gráfico de treinamento.
+O rastreamento utiliza:
+
+- backend SQLite para armazenar execuções, parâmetros, métricas e tags;
+- diretório local para os artefatos gerenciados pelo MLflow;
+- uma execução independente para cada modelo;
+- métricas do conjunto de teste;
+- componentes das matrizes de confusão;
+- custos relativos de Falsos Positivos e Falsos Negativos;
+- médias e desvios-padrão da validação cruzada, quando disponíveis;
+- parâmetros gerais e configurações específicas dos modelos;
+- tags para identificar o modelo recomendado e o modelo neural central;
+- tabelas, resumos em JSON e gráficos comparativos como artefatos.
+
+O Random Forest foi registrado com a tag `recommended_for_business=true`, enquanto a MLP PyTorch foi registrada com `central_neural_model=true`.
 
 Para iniciar a interface local:
 
 ```bash
-mlflow server \
+mlflow ui \
   --backend-store-uri sqlite:///mlflow.db \
   --host 127.0.0.1 \
   --port 5000
@@ -294,7 +339,7 @@ mlflow server \
 
 Depois, acesse `http://127.0.0.1:5000`.
 
-O banco `mlflow.db` e o diretório `mlartifacts/` são locais e não devem ser versionados.
+O banco `mlflow.db` e o diretório `mlartifacts/` são locais e não devem ser versionados. Os relatórios consolidados utilizados na documentação estão disponíveis em `reports/mlflow_experiments/`.
 
 ---
 
@@ -320,7 +365,15 @@ churn-prediction-mle/
 │   ├── 04_random_forest.ipynb
 │   ├── 05_mlp_classifier.ipynb
 │   ├── 06_mlp_pytorch.ipynb
-│   └── 07_comparacao_modelos.ipynb
+│   ├── 07_comparacao_modelos.ipynb
+│   └── 08_mlflow_experimentos.ipynb
+├── reports/
+│   └── mlflow_experiments/
+│       ├── business_impact_comparison.png
+│       ├── cross_validation_results.csv
+│       ├── experiment_summary.json
+│       ├── holdout_results.csv
+│       └── model_metrics_comparison.png
 ├── src/
 │   └── churn_prediction/
 │       ├── api/
@@ -343,7 +396,8 @@ churn-prediction-mle/
 4. `04_random_forest.ipynb` — modelo ensemble e importância das variáveis;
 5. `05_mlp_classifier.ipynb` — experimento adicional com MLPClassifier;
 6. `06_mlp_pytorch.ipynb` — MLP central em PyTorch, Early Stopping, thresholds, validação cruzada, persistência e MLflow;
-7. `07_comparacao_modelos.ipynb` — comparação consolidada e seleção do modelo campeão.
+7. `07_comparacao_modelos.ipynb` — comparação consolidada e seleção do modelo recomendado;
+8. `08_mlflow_experimentos.ipynb` — rastreamento, comparação e auditoria dos experimentos com MLflow.
 
 ---
 
@@ -496,13 +550,17 @@ Concluído:
 - ✅ análise de thresholds e custo relativo;
 - ✅ validação cruzada estratificada da MLP PyTorch;
 - ✅ persistência e validação dos artefatos da MLP PyTorch;
-- ✅ registro da MLP PyTorch no MLflow.
+- ✅ DummyClassifier como baseline mínimo;
+- ✅ comparação consolidada dos cinco modelos;
+- ✅ seleção do Random Forest como modelo recomendado para o negócio;
+- ✅ definição da MLP PyTorch como modelo neural central;
+- ✅ rastreamento consolidado dos cinco modelos no MLflow;
+- ✅ registro de parâmetros, métricas, tags e artefatos;
+- ✅ auditoria e organização das execuções do MLflow;
+- ✅ relatórios comparativos versionados em `reports/mlflow_experiments/`.
 
 Em andamento ou pendente:
 
-- 🔄 DummyClassifier e comparação consolidada;
-- ⏳ seleção do modelo campeão;
-- ⏳ registro consolidado dos demais modelos no MLflow;
 - ⏳ refatoração completa em `src/`;
 - ⏳ API FastAPI;
 - ⏳ testes automatizados;
