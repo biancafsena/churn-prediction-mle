@@ -1,0 +1,13 @@
+{
+    "project": "churn-prediction-mle",
+    "experiment_name": "churn-prediction-model-comparison",
+    "experiment_id": "2",
+    "models_evaluated": 5,
+    "models_with_cross_validation": 3,
+    "classification_threshold": 0.5,
+    "false_positive_cost": 1,
+    "false_negative_cost": 5,
+    "recommended_model": "Random Forest",
+    "central_neural_model": "MLP PyTorch",
+    "selection_reason": "Random Forest apresentou o menor custo relativo total, o menor número de falsos negativos e o melhor equilíbrio entre Recall, F1-Score e Average Precision."
+}

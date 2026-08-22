@@ -1,0 +1,4 @@
+Model,Accuracy Mean,Accuracy Std,Precision Mean,Precision Std,Recall Mean,Recall Std,F1-Score Mean,F1-Score Std,ROC-AUC Mean,ROC-AUC Std,Average Precision Mean,Average Precision Std,Test-CV Absolute Mean Difference
+Random Forest,0.7748,0.0106,0.5584,0.0155,0.7224,0.0341,0.6297,0.0208,0.8449,0.0097,0.655,0.0219,0.0053
+MLPClassifier,0.7954,0.01,0.6294,0.0328,0.566,0.0572,0.5939,0.0268,0.8411,0.0136,0.6484,0.024,0.0378
+MLP PyTorch,0.8012,0.0112,0.6537,0.0271,0.534,0.02,0.5878,0.0226,0.8419,0.015,0.6488,0.0288,0.0084

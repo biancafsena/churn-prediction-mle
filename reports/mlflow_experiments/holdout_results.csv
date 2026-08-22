@@ -1,0 +1,6 @@
+Model,Framework,Model Family,Accuracy,Precision,Recall,F1-Score,ROC-AUC,Average Precision,TN,FP,FN,TP,Correct Predictions,Errors,Positive Predictions,FP Cost,FN Cost,Relative Total Cost,Recommended Model,Central Neural Model
+DummyClassifier,Scikit-learn,Baseline,0.7346,0.0,0.0,0.0,0.5,0.2654,1035,0,374,0,1035,374,0,0,1870,1870,False,False
+Logistic Regression,Scikit-learn,Linear Model,0.8055,0.6572,0.5588,0.604,0.8419,0.6334,926,109,165,209,1135,274,318,109,825,934,False,False
+Random Forest,Scikit-learn,Ensemble,0.7729,0.5544,0.7353,0.6322,0.8401,0.6492,814,221,99,275,1089,320,496,221,495,716,True,False
+MLPClassifier,Scikit-learn,Neural Network,0.785,0.633,0.4519,0.5273,0.8341,0.6231,937,98,205,169,1106,303,267,98,1025,1123,False,False
+MLP PyTorch,PyTorch,Neural Network,0.7956,0.6344,0.5428,0.585,0.8419,0.6349,918,117,171,203,1121,288,320,117,855,972,False,True
