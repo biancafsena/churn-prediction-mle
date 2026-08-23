@@ -354,10 +354,15 @@ churn-prediction-mle/
 │   ├── processed/
 │   └── raw/
 ├── docs/
+│   ├── inference_architecture.md
 │   ├── ml_canvas.md
 │   ├── model_card.md
+│   ├── monitoring_plan.md
 │   └── star_video_script.md
 ├── models/
+│   ├── mlp_pytorch_metadata.json
+│   ├── mlp_pytorch_preprocessor.joblib
+│   └── mlp_pytorch_state_dict.pt
 ├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_metricas_negocio_tecnicas.ipynb
@@ -377,11 +382,36 @@ churn-prediction-mle/
 ├── src/
 │   └── churn_prediction/
 │       ├── api/
+│       │   ├── __init__.py
+│       │   ├── main.py
+│       │   └── schemas.py
 │       ├── data/
+│       │   ├── __init__.py
+│       │   ├── load.py
+│       │   └── schema.py
 │       ├── features/
-│       └── modeling/
+│       │   ├── __init__.py
+│       │   └── preprocessing.py
+│       ├── modeling/
+│       │   ├── __init__.py
+│       │   ├── evaluate.py
+│       │   ├── model.py
+│       │   ├── predict.py
+│       │   └── train.py
+│       ├── __init__.py
+│       └── config.py
 ├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_api.py
+│   ├── test_evaluate.py
+│   ├── test_load.py
+│   ├── test_prediction.py
+│   ├── test_preprocessing.py
+│   ├── test_schema.py
+│   └── test_train.py
 ├── .gitignore
+├── Makefile
 ├── pyproject.toml
 └── README.md
 ```
@@ -395,7 +425,7 @@ churn-prediction-mle/
 3. `03_baseline_logistic_regression.ipynb` — baseline de Regressão Logística;
 4. `04_random_forest.ipynb` — modelo ensemble e importância das variáveis;
 5. `05_mlp_classifier.ipynb` — experimento adicional com MLPClassifier;
-6. `06_mlp_pytorch.ipynb` — MLP central em PyTorch, Early Stopping, thresholds, validação cruzada, persistência e MLflow;
+6. `06_mlp_pytorch.ipynb` — MLP central em PyTorch, Early Stopping, thresholds, validação cruzada e persistência;
 7. `07_comparacao_modelos.ipynb` — comparação consolidada e seleção do modelo recomendado;
 8. `08_mlflow_experimentos.ipynb` — rastreamento, comparação e auditoria dos experimentos com MLflow.
 
@@ -412,7 +442,7 @@ Requisitos:
 Clone o repositório e entre no diretório:
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
+git clone https://github.com/biancafsena/churn-prediction-mle.git
 cd churn-prediction-mle
 ```
 
@@ -438,6 +468,37 @@ python -m pip check
 
 ---
 
+### Comandos do Projeto
+
+O `Makefile` centraliza os principais comandos de desenvolvimento.
+
+Para consultar os comandos disponíveis:
+
+```bash
+make help
+```
+
+Principais comandos:
+
+```bash
+make install
+make lint
+make format
+make test
+make coverage
+make check
+make run-api
+make run-mlflow
+```
+
+O comando abaixo executa o lint e todos os testes:
+
+```bash
+make check
+```
+
+---
+
 ### Execução dos Notebooks
 
 Inicie o Jupyter:
@@ -446,50 +507,219 @@ Inicie o Jupyter:
 jupyter lab
 ```
 
-Execute os notebooks na ordem numérica. O dataset deve estar disponível em `data/raw/` antes da execução.
+Execute os notebooks na ordem numérica.
+
+O dataset deve estar disponível em:
+
+```text
+data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+```
 
 ---
 
 ### API
 
-A etapa de engenharia disponibilizará os endpoints:
+A aplicação disponibiliza uma API REST construída com FastAPI para operacionalizar a MLP desenvolvida em PyTorch.
 
-- `GET /health` — verificação da disponibilidade da aplicação;
-- `POST /predict` — recebimento das características do cliente e retorno da probabilidade e classe previstas.
+Endpoints disponíveis:
 
-As entradas serão validadas com Pydantic. O modelo e o pré-processador serão carregados uma única vez na inicialização da aplicação.
+- `GET /` — informações gerais da aplicação;
+- `GET /health` — disponibilidade e carregamento do modelo;
+- `POST /predict` — previsão da probabilidade e da classe de churn;
+- `GET /docs` — documentação interativa Swagger;
+- `GET /redoc` — documentação alternativa ReDoc.
 
-**Status atual:** implementação pendente.
+As entradas são validadas com Pydantic.
+
+O modelo, o pré-processador e os metadados são carregados uma única vez durante a inicialização da aplicação.
+
+A resposta de inferência contém:
+
+- probabilidade de churn;
+- classe prevista;
+- rótulo da classe;
+- threshold utilizado;
+- nome e versão do modelo;
+- tempo interno de processamento.
+
+A API também possui:
+
+- logging estruturado em JSON;
+- tratamento de erros;
+- identificador único por requisição;
+- medição da latência total;
+- monitoramento do carregamento dos artefatos;
+- execução da MLP em modo de avaliação;
+- inferência sem cálculo de gradientes.
+
+Headers de observabilidade:
+
+- `X-Request-ID`;
+- `X-Process-Time-Ms`.
+
+Para iniciar a API:
+
+```bash
+make run-api
+```
+
+Comando equivalente:
+
+```bash
+python -m uvicorn churn_prediction.api.main:app \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --reload
+```
+
+Acesse a documentação interativa:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Verificação de saúde:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+---
+
+### Exemplo de Requisição
+
+```bash
+curl -X POST \
+  "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female",
+    "SeniorCitizen": 0,
+    "Partner": "Yes",
+    "Dependents": "No",
+    "tenure": 1,
+    "PhoneService": "No",
+    "MultipleLines": "No phone service",
+    "InternetService": "DSL",
+    "OnlineSecurity": "No",
+    "OnlineBackup": "Yes",
+    "DeviceProtection": "No",
+    "TechSupport": "No",
+    "StreamingTV": "No",
+    "StreamingMovies": "No",
+    "Contract": "Month-to-month",
+    "PaperlessBilling": "Yes",
+    "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 29.85,
+    "TotalCharges": 29.85
+  }'
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "churn_probability": 0.5922411680221558,
+  "churn_prediction": 1,
+  "churn_label": "Churn",
+  "threshold": 0.5,
+  "model_name": "ChurnMLP",
+  "model_version": "1.0.0",
+  "processing_time_ms": 25.49
+}
+```
+
+---
+
+### Validação dos Dados
+
+O projeto utiliza duas camadas de validação:
+
+- **Pandera:** valida o dataset utilizado nos fluxos de dados e treinamento;
+- **Pydantic:** valida os dados recebidos pela API.
+
+A validação com Pandera verifica:
+
+- presença das 21 colunas;
+- tipos dos dados;
+- valores categóricos permitidos;
+- limites numéricos;
+- identificadores únicos;
+- valores permitidos para o target;
+- ordem e estrutura do dataset.
+
+A validação com Pydantic verifica:
+
+- presença das 19 variáveis obrigatórias;
+- tipos dos campos;
+- limites numéricos;
+- categorias permitidas;
+- rejeição de campos adicionais.
 
 ---
 
 ### Testes e Qualidade
 
-O projeto utilizará Pytest para validar, no mínimo:
+O projeto utiliza Pytest para validar:
 
-- schema e pré-processamento;
+- carregamento e preparação dos dados;
+- schema Pandera;
+- pré-processamento;
+- arquitetura da MLP;
+- treinamento;
+- Early Stopping;
+- avaliação das métricas;
+- análise de thresholds;
+- cálculo do custo relativo;
 - carregamento dos artefatos;
 - smoke test de inferência;
+- schemas Pydantic;
 - endpoint `/health`;
-- endpoint `/predict`.
+- endpoint `/predict`;
+- rejeição de entradas inválidas;
+- middleware de observabilidade;
+- Request ID;
+- medição de latência.
 
-O Ruff será utilizado para linting do código produtivo.
-
-Comandos planejados:
+Para executar todos os testes:
 
 ```bash
-ruff check .
-pytest
+python -m pytest -q
 ```
 
-**Status atual:** implementação dos testes pendente.
+Resultado atual:
+
+```text
+44 passed
+```
+
+Para executar a validação estática:
+
+```bash
+python -m ruff check src tests
+```
+
+Resultado atual:
+
+```text
+All checks passed!
+```
+
+Para executar todas as verificações:
+
+```bash
+make check
+```
+
+O código produtivo utiliza logging estruturado e não possui chamadas `print()`.
 
 ---
 
 ### Tecnologias
 
 - Python;
-- Pandas e NumPy;
+- Pandas;
+- NumPy;
 - Scikit-Learn;
 - PyTorch;
 - Matplotlib;
@@ -498,10 +728,12 @@ pytest
 - SQLite;
 - FastAPI;
 - Pydantic;
+- Pandera;
 - Uvicorn;
 - Pytest;
 - Ruff;
-- Jupyter Notebook.
+- Jupyter Notebook;
+- Make.
 
 ---
 
@@ -518,27 +750,33 @@ O projeto adota:
 - validação cruzada estratificada;
 - hash do dataset no MLflow;
 - persistência do pré-processador, pesos e metadados;
-- teste de recarregamento dos artefatos.
+- teste de recarregamento dos artefatos;
+- pipeline de treinamento reutilizável;
+- avaliação reutilizável;
+- validação de schema;
+- comandos padronizados no `Makefile`.
 
 ---
 
 ### Documentação
 
-Documentos previstos em `docs/`:
+Documentos disponíveis em `docs/`:
 
 - `ml_canvas.md` — planejamento do problema e da solução;
 - `model_card.md` — desempenho, limitações, riscos e usos recomendados;
+- `inference_architecture.md` — arquitetura e estratégia de inferência;
+- `monitoring_plan.md` — métricas, alertas, playbooks, drift e retreinamento;
 - `star_video_script.md` — roteiro da apresentação final.
 
 ---
 
 ### Status do Projeto
 
-🚧 **Em desenvolvimento**
+🏁 **Etapa técnica concluída**
 
 Concluído:
 
-- ✅ estrutura inicial do repositório;
+- ✅ estrutura do repositório;
 - ✅ ML Canvas;
 - ✅ análise exploratória e data readiness;
 - ✅ métricas técnicas e de negócio;
@@ -548,25 +786,39 @@ Concluído:
 - ✅ MLP com PyTorch;
 - ✅ batching e Early Stopping;
 - ✅ análise de thresholds e custo relativo;
-- ✅ validação cruzada estratificada da MLP PyTorch;
-- ✅ persistência e validação dos artefatos da MLP PyTorch;
+- ✅ validação cruzada estratificada;
+- ✅ persistência e validação dos artefatos;
 - ✅ DummyClassifier como baseline mínimo;
 - ✅ comparação consolidada dos cinco modelos;
 - ✅ seleção do Random Forest como modelo recomendado para o negócio;
 - ✅ definição da MLP PyTorch como modelo neural central;
-- ✅ rastreamento consolidado dos cinco modelos no MLflow;
+- ✅ rastreamento dos cinco modelos no MLflow;
 - ✅ registro de parâmetros, métricas, tags e artefatos;
 - ✅ auditoria e organização das execuções do MLflow;
-- ✅ relatórios comparativos versionados em `reports/mlflow_experiments/`.
+- ✅ relatórios versionados em `reports/mlflow_experiments/`;
+- ✅ refatoração do código em `src/`;
+- ✅ carregamento e preparação reutilizável dos dados;
+- ✅ validação de schema com Pandera;
+- ✅ pipeline reutilizável de treinamento;
+- ✅ avaliação reutilizável de métricas e thresholds;
+- ✅ API FastAPI;
+- ✅ schemas de entrada e saída com Pydantic;
+- ✅ logging estruturado;
+- ✅ middleware de observabilidade;
+- ✅ rastreamento por Request ID;
+- ✅ monitoramento de latência;
+- ✅ 44 testes automatizados;
+- ✅ validação estática com Ruff;
+- ✅ Makefile;
+- ✅ Model Card;
+- ✅ documentação da arquitetura de inferência;
+- ✅ plano de monitoramento.
 
-Em andamento ou pendente:
+Pendente para a entrega:
 
-- ⏳ refatoração completa em `src/`;
-- ⏳ API FastAPI;
-- ⏳ testes automatizados;
-- ⏳ logging estruturado;
-- ⏳ Model Card e plano de monitoramento;
-- ⏳ vídeo STAR.
+- ⏳ revisão final do README;
+- ⏳ revisão do roteiro STAR;
+- ⏳ gravação do vídeo de apresentação.
 
 ---
 
