@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -44,11 +45,14 @@ data/processed/*
 # Modelos treinados
 # ============================================================
 models/*
-!models/.gitkeep
-
 *.joblib
 *.pkl
 *.pickle
+
+!models/.gitkeep
+!models/mlp_pytorch_metadata.json
+!models/mlp_pytorch_preprocessor.joblib
+!models/mlp_pytorch_state_dict.pt
 
 # ============================================================
 # Artefatos gerados
