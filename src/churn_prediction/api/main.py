@@ -2,11 +2,22 @@
 
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+)
 from contextlib import asynccontextmanager
 from time import perf_counter
+from typing import Any
+from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+)
 
 from churn_prediction.api.schemas import (
     CustomerFeatures,
@@ -37,13 +48,34 @@ logger = logging.getLogger(
 )
 
 
+def log_event(
+    event: str,
+    level: int = logging.INFO,
+    **details: Any,
+) -> None:
+    """Registra um evento estruturado em JSON."""
+    log_data = {
+        "event": event,
+        **details,
+    }
+
+    logger.log(
+        level,
+        json.dumps(
+            log_data,
+            ensure_ascii=False,
+            default=str,
+        ),
+    )
+
+
 @asynccontextmanager
 async def lifespan(
     application: FastAPI,
 ) -> AsyncIterator[None]:
     """Carrega os artefatos durante a inicialização."""
-    logger.info(
-        "Iniciando o carregamento dos artefatos."
+    log_event(
+        "application_starting"
     )
 
     try:
@@ -53,18 +85,32 @@ async def lifespan(
 
     except Exception:
         logger.exception(
-            "Falha ao carregar os artefatos."
+            json.dumps(
+                {
+                    "event": "artifact_loading_failed",
+                }
+            )
         )
         raise
 
-    logger.info(
-        "Artefatos carregados com sucesso."
+    log_event(
+        "artifacts_loaded",
+        model_name=(
+            application
+            .state
+            .predictor
+            .metadata
+            .get(
+                "model_name",
+                "ChurnMLP",
+            )
+        ),
     )
 
     yield
 
-    logger.info(
-        "Encerrando a aplicação."
+    log_event(
+        "application_stopping"
     )
 
 
@@ -77,6 +123,84 @@ app = FastAPI(
     ),
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def request_observability_middleware(
+    request: Request,
+    call_next: Callable[
+        [Request],
+        Awaitable[Response],
+    ],
+) -> Response:
+    """Registra latência e metadados das requisições."""
+    request_id = (
+        request.headers.get(
+            "X-Request-ID"
+        )
+        or uuid4().hex
+    )
+
+    request.state.request_id = request_id
+
+    started_at = perf_counter()
+
+    try:
+        response = await call_next(
+            request
+        )
+
+    except Exception:
+        processing_time_ms = (
+            perf_counter()
+            - started_at
+        ) * 1000
+
+        logger.exception(
+            json.dumps(
+                {
+                    "event": "request_failed",
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": 500,
+                    "processing_time_ms": round(
+                        processing_time_ms,
+                        3,
+                    ),
+                },
+                ensure_ascii=False,
+            )
+        )
+
+        raise
+
+    processing_time_ms = (
+        perf_counter()
+        - started_at
+    ) * 1000
+
+    response.headers[
+        "X-Request-ID"
+    ] = request_id
+
+    response.headers[
+        "X-Process-Time-Ms"
+    ] = f"{processing_time_ms:.3f}"
+
+    log_event(
+        "request_completed",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
+        processing_time_ms=round(
+            processing_time_ms,
+            3,
+        ),
+    )
+
+    return response
 
 
 @app.get(
@@ -162,9 +286,15 @@ def predict(
         )
 
     except (TypeError, ValueError) as error:
-        logger.warning(
-            "Entrada rejeitada durante a inferência: %s",
-            error,
+        log_event(
+            "prediction_input_rejected",
+            level=logging.WARNING,
+            request_id=getattr(
+                request.state,
+                "request_id",
+                "unavailable",
+            ),
+            error=str(error),
         )
 
         raise HTTPException(
@@ -174,7 +304,17 @@ def predict(
 
     except Exception as error:
         logger.exception(
-            "Falha inesperada durante a inferência."
+            json.dumps(
+                {
+                    "event": "prediction_failed",
+                    "request_id": getattr(
+                        request.state,
+                        "request_id",
+                        "unavailable",
+                    ),
+                },
+                ensure_ascii=False,
+            )
         )
 
         raise HTTPException(
@@ -198,25 +338,23 @@ def predict(
         - started_at
     ) * 1000
 
-    log_data = {
-        "event": "prediction_completed",
-        "prediction": prediction,
-        "probability": round(
+    log_event(
+        "prediction_completed",
+        request_id=getattr(
+            request.state,
+            "request_id",
+            "unavailable",
+        ),
+        prediction=prediction,
+        probability=round(
             probability,
             6,
         ),
-        "threshold": predictor.threshold,
-        "processing_time_ms": round(
+        threshold=predictor.threshold,
+        processing_time_ms=round(
             processing_time_ms,
             3,
         ),
-    }
-
-    logger.info(
-        json.dumps(
-            log_data,
-            ensure_ascii=False,
-        )
     )
 
     return PredictionResponse(

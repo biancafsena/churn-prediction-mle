@@ -2,16 +2,18 @@
 
 from pathlib import Path
 
-PROJECT_ROOT = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+
+RAW_DATA_PATH = (
+    RAW_DATA_DIR
+    / "WA_Fn-UseC_-Telco-Customer-Churn.csv"
 )
 
-MODELS_DIR = (
-    PROJECT_ROOT
-    / "models"
-)
+MODELS_DIR = PROJECT_ROOT / "models"
 
 MODEL_STATE_PATH = (
     MODELS_DIR
@@ -27,6 +29,9 @@ MODEL_METADATA_PATH = (
     MODELS_DIR
     / "mlp_pytorch_metadata.json"
 )
+
+IDENTIFIER_COLUMN = "customerID"
+TARGET_COLUMN = "Churn"
 
 APP_NAME = "Customer Churn Prediction API"
 APP_VERSION = "0.1.0"

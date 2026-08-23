@@ -59,27 +59,42 @@ def test_predict_returns_churn_prediction(
 
     response_data = response.json()
 
-    assert response_data[
-        "churn_probability"
-    ] > 0.50
+    assert (
+        response_data["churn_probability"]
+        > 0.50
+    )
 
     assert (
         response_data["churn_probability"]
         == 0.5922411680221558
     )
 
-    assert response_data[
-        "churn_prediction"
-    ] == 1
+    assert (
+        response_data["churn_prediction"]
+        == 1
+    )
 
-    assert response_data[
-        "churn_label"
-    ] == "Churn"
+    assert (
+        response_data["churn_label"]
+        == "Churn"
+    )
 
     assert response_data["threshold"] == 0.50
-    assert response_data["model_name"] == "ChurnMLP"
-    assert response_data["model_version"] == "1.0.0"
-    assert response_data["processing_time_ms"] >= 0
+
+    assert (
+        response_data["model_name"]
+        == "ChurnMLP"
+    )
+
+    assert (
+        response_data["model_version"]
+        == "1.0.0"
+    )
+
+    assert (
+        response_data["processing_time_ms"]
+        >= 0
+    )
 
 
 def test_predict_rejects_invalid_tenure(
@@ -137,3 +152,37 @@ def test_predict_rejects_extra_feature(
     )
 
     assert response.status_code == 422
+
+
+def test_observability_middleware(
+    api_client: TestClient,
+) -> None:
+    """Deve retornar cabeçalhos de rastreamento e latência."""
+    response = api_client.get(
+        "/health"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        "X-Request-ID"
+        in response.headers
+    )
+
+    assert (
+        "X-Process-Time-Ms"
+        in response.headers
+    )
+
+    request_id = response.headers[
+        "X-Request-ID"
+    ]
+
+    processing_time_ms = float(
+        response.headers[
+            "X-Process-Time-Ms"
+        ]
+    )
+
+    assert len(request_id) == 32
+    assert processing_time_ms >= 0
