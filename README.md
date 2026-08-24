@@ -59,7 +59,7 @@ Características principais:
 - taxa de churn de 26,54%;
 - 11 valores ausentes em `TotalCharges`, tratados por imputação no pipeline.
 
-O arquivo deve estar disponível em:
+O arquivo está disponível em:
 
 ```text
 data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
