@@ -813,12 +813,9 @@ Concluído:
 - ✅ Model Card;
 - ✅ documentação da arquitetura de inferência;
 - ✅ plano de monitoramento.
-
-Pendente para a entrega:
-
-- ⏳ revisão final do README;
-- ⏳ revisão do roteiro STAR;
-- ⏳ gravação do vídeo de apresentação.
+- ✅ revisão final do README;
+- ✅ revisão do roteiro STAR;
+- ✅ gravação do vídeo de apresentação.
 
 ---
 
