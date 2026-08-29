@@ -5,6 +5,13 @@
 **Grupo:** 56  
 **Autora:** Bianca Firmino Ferreira de Sena
 
+
+### Apresentação em Vídeo
+
+A apresentação completa do projeto está disponível no YouTube:
+
+▶️ [Assistir à apresentação do Tech Challenge](https://youtu.be/hDcKuN5QngY)
+
 ---
 
 ### Visão Geral
